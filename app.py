@@ -1,17 +1,14 @@
 import os
 import re
 import asyncio
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+import streamlit as st
 from google import genai
 
-app = FastAPI()
-
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+# --- Config ---
+GEMINI_KEY = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 if not GEMINI_KEY:
-    raise RuntimeError("GEMINI_API_KEY not set")
+    st.error("GEMINI_API_KEY not set. Add it in Streamlit Secrets.")
+    st.stop()
 
 client = genai.Client(api_key=GEMINI_KEY)
 
@@ -122,10 +119,6 @@ Knowledgeable but approachable researcher. Direct. Clear. Not textbook. Not blog
 Now rewrite the text I send. Output only the rewritten text."""
 
 
-class HumanizeRequest(BaseModel):
-    text: str
-
-
 def find_violations(text: str):
     found = []
     lower = text.lower()
@@ -189,32 +182,44 @@ async def humanize_all(paragraphs: list) -> list:
     return results
 
 
-@app.post("/api/humanize")
-async def humanize_endpoint(req: HumanizeRequest):
-    text = req.text.strip()
-    if not text:
-        raise HTTPException(400, "No text provided")
-    words = len(text.split())
-    if words > MAX_WORDS:
-        raise HTTPException(400, f"Text exceeds {MAX_WORDS} word limit ({words} words)")
-    raw_paras = text.split("\n\n")
-    paragraphs = [p.strip().replace("\n", " ") for p in raw_paras if len(p.strip()) > 50]
-    if not paragraphs:
-        raise HTTPException(400, "No valid paragraphs found")
-    results = await humanize_all(paragraphs)
-    final = "\n\n".join(results)
-    return {
-        "output": final,
-        "paragraphs": len(paragraphs),
-        "words_in": words,
-        "words_out": len(final.split()),
-    }
+# --- Streamlit UI ---
+st.set_page_config(page_title="Humanizer", page_icon="\u270d\ufe0f", layout="wide")
+st.title("Humanizer")
+st.caption("Academic paper rewriter - 3000 word limit")
 
+col1, col2 = st.columns(2)
 
-@app.get("/", response_class=HTMLResponse)
-async def index():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+with col1:
+    st.subheader("Input (AI text)")
+    input_text = st.text_area("Paste text here", height=400, label_visibility="collapsed")
+    word_count = len(input_text.split())
+    st.caption(f"{word_count} / {MAX_WORDS} words")
 
+with col2:
+    st.subheader("Output (Humanized)")
+    output_placeholder = st.empty()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+run_btn = st.button("Humanize", type="primary", use_container_width=True)
+
+if run_btn:
+    if not input_text.strip():
+        st.warning("Please paste some text.")
+    elif word_count > MAX_WORDS:
+        st.error(f"Text exceeds {MAX_WORDS} word limit ({word_count} words).")
+    else:
+        with st.spinner(f"Humanizing {word_count} words... this takes 30-60s"):
+            raw_paras = input_text.split("\n\n")
+            paragraphs = [p.strip().replace("\n", " ") for p in raw_paras if len(p.strip()) > 50]
+            if not paragraphs:
+                st.error("No valid paragraphs found.")
+            else:
+                results = asyncio.run(humanize_all(paragraphs))
+                final = "\n\n".join(results)
+                output_placeholder.text_area("Output", value=final, height=400, label_visibility="collapsed")
+                st.caption(f"{len(final.split())} words out - {len(paragraphs)} paragraphs")
+                st.download_button(
+                    label="Download .txt",
+                    data=final,
+                    file_name="humanized.txt",
+                    mime="text/plain",
+                )
