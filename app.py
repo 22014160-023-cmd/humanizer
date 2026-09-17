@@ -17,41 +17,32 @@ MODELS_TO_TRY = ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-late
 MAX_WORDS = 3000
 PARALLEL_BATCH = 6
 
-BANNED_WORDS = [
-    "essential","crucial","beneficial","impactful","furthermore","moreover",
-    "consequently","accordingly","additionally","significantly","notably",
-    "importantly","ultimately","nevertheless","nonetheless","conversely","novel",
-    "robust","comprehensive","substantial","pivotal","paramount","indispensable",
-    "seminal","delve","testament","showcase","underscore","leverage","foster",
-    "garner","realm","multifaceted","nuanced","holistic","interplay","harness",
-    "unlock","myriad","seamless","meticulous","intricate","tapestry","landscape",
-    "groundbreaking","cutting-edge","state-of-the-art","transformative",
-    "revolutionary","remarkable","exceptional","optimal","flawless","effortless",
-    "intuitive","sophisticated","advanced","visionary","thoughtfully",
-    "deliberately","systematically","comprehensively","robustly","rigorously",
-    "precisely","accurately","appropriately","effectively","efficiently",
-    "meaningfully","fundamentally","inherently","intrinsically","critically",
-    "centrally","chiefly","principally","predominantly","largely","broadly",
-    "generally","typically","commonly","frequently","often","usually",
-    "consistently","reliably","uniformly",
-]
+BANNED_WORDS = ["essential","crucial","beneficial","impactful","furthermore","moreover",
+    "consequently","accordingly","additionally","significantly","notably","importantly",
+    "ultimately","nevertheless","nonetheless","conversely","novel","robust","comprehensive",
+    "substantial","pivotal","paramount","indispensable","seminal","delve","testament",
+    "showcase","underscore","leverage","foster","garner","realm","multifaceted","nuanced",
+    "holistic","interplay","harness","unlock","myriad","seamless","meticulous","intricate",
+    "tapestry","landscape","groundbreaking","cutting-edge","state-of-the-art","transformative",
+    "revolutionary","remarkable","exceptional","optimal","flawless","effortless","intuitive",
+    "sophisticated","advanced","visionary","thoughtfully","deliberately","systematically",
+    "comprehensively","robustly","rigorously","precisely","accurately","appropriately",
+    "effectively","efficiently","meaningfully","fundamentally","inherently","intrinsically",
+    "critically","centrally","chiefly","principally","predominantly","largely","broadly",
+    "generally","typically","commonly","frequently","often","usually","consistently",
+    "reliably","uniformly"]
 
-BANNED_PHRASES = [
-    "it's worth noting that","it's important to recognize","a key consideration",
+BANNED_PHRASES = ["it's worth noting that","it's important to recognize","a key consideration",
     "a critical factor","the broader implications","the underlying mechanisms",
     "the interplay between","the complex relationship","a deeper understanding",
-    "meaningful insights","actionable insights","a robust framework",
-    "a comprehensive approach","a systematic analysis","an integrated framework",
-    "a nuanced understanding","the multifaceted nature","a holistic approach",
-    "a paradigm shift","at its core","in essence","in practice","in principle",
-    "on a fundamental level","when considered together","taken as a whole",
-    "from a broader perspective",
-]
+    "meaningful insights","actionable insights","a robust framework","a comprehensive approach",
+    "a systematic analysis","an integrated framework","a nuanced understanding",
+    "the multifaceted nature","a holistic approach","a paradigm shift","at its core",
+    "in essence","in practice","in principle","on a fundamental level",
+    "when considered together","taken as a whole","from a broader perspective"]
 
-ACADEMIC_EXCEPTIONS = {
-    "comprehensive","systematically","novel","significant","significantly",
-    "robust","substantial","fundamentally","rigorously","precisely","accurately",
-}
+ACADEMIC_EXCEPTIONS = {"comprehensive","systematically","novel","significant","significantly",
+    "robust","substantial","fundamentally","rigorously","precisely","accurately"}
 
 HUMANIZER_PROMPT = """You rewrite academic papers so they read as if a human researcher wrote them, not an AI. Apply all rules. Output only the rewritten text.
 
@@ -74,53 +65,30 @@ VOICE:
 - Active voice. Past tense for methods/results. Present tense for knowledge/conclusions.
 - No passive nominalization. "We assessed," not "the assessment of."
 
-BANNED WORDS (never use):
-essential, crucial, beneficial, impactful, furthermore, moreover, consequently, accordingly, additionally, notably, importantly, ultimately, nevertheless, nonetheless, conversely, pivotal, paramount, indispensable, seminal, delve, testament, showcase, underscore, leverage, foster, garner, realm, multifaceted, nuanced, holistic, interplay, harness, unlock, myriad, seamless, meticulous, intricate, tapestry, landscape, groundbreaking, cutting-edge, state-of-the-art, transformative, revolutionary, remarkable, exceptional, optimal, flawless, effortless, intuitive, sophisticated, visionary, thoughtfully, deliberately, comprehensively, robustly, rigorously, appropriately, effectively, efficiently, meaningfully, inherently, intrinsically, critically, centrally, chiefly, principally, predominantly, largely, broadly, generally, typically, commonly, frequently, often, usually, consistently, reliably, uniformly.
+BANNED WORDS (never use): essential, crucial, beneficial, impactful, furthermore, moreover, consequently, accordingly, additionally, notably, importantly, ultimately, nevertheless, nonetheless, conversely, pivotal, paramount, indispensable, seminal, delve, testament, showcase, underscore, leverage, foster, garner, realm, multifaceted, nuanced, holistic, interplay, harness, unlock, myriad, seamless, meticulous, intricate, tapestry, landscape, groundbreaking, cutting-edge, state-of-the-art, transformative, revolutionary, remarkable, exceptional, optimal, flawless, effortless, intuitive, sophisticated, visionary, thoughtfully, deliberately, comprehensively, robustly, rigorously, appropriately, effectively, efficiently, meaningfully, inherently, intrinsically, critically, centrally, chiefly, principally, predominantly, largely, broadly, generally, typically, commonly, frequently, often, usually, consistently, reliably, uniformly.
 
-BANNED SUBSTITUTIONS:
-- No "alongside" for "and." No "utilize" for "use." No "construct" for "create."
-- No "demonstrate" for "show." No "facilitate" for "help." No "prior to" for "before."
-- No "in order to" for "to."
+BANNED SUBSTITUTIONS: No "alongside" for "and." No "utilize" for "use." No "construct" for "create." No "demonstrate" for "show." No "facilitate" for "help."
 
-BANNED PHRASES:
-it's worth noting that, it's important to recognize, a key consideration, a critical factor, the broader implications, the underlying mechanisms, the interplay between, the complex relationship, a deeper understanding, meaningful insights, actionable insights, a robust framework, a comprehensive approach, a systematic analysis, an integrated framework, a nuanced understanding, the multifaceted nature, a holistic approach, a paradigm shift, at its core, in essence, in practice, in principle, on a fundamental level, when considered together, taken as a whole, from a broader perspective.
+BANNED WIND-UPS: X isn't just Y, X doesn't just Y, It's not just about X, This is more than X.
 
-BANNED WIND-UPS:
-X isn't just Y, X doesn't just Y, It's not just about X, This is more than X, It goes beyond X, What's interesting is...
+LAZY PATTERNS: It is important to note that, Of note, It is clear that, Let me explain, Here's the key point, In other words (as filler), That said (as hedge).
 
-LAZY PATTERNS:
-It is important to note that, It should be emphasized that, It is worth mentioning that, Of note, It is clear that, There is a need for, Let me explain, Let me break this down, Here's the key point, In other words (as filler), That said (as hedge), There are several factors (without naming them), This is a complex issue (as dodge).
+OVERLY ACADEMIC PHRASES: It is evident that, It can be seen that, It is apparent that, It is obvious that, The fact that, It is well known that.
 
-REDUNDANT PHRASES:
-past history -> history, end result -> result, future plans -> plans, completely eliminate -> eliminate, very unique -> unique, basic fundamentals -> fundamentals.
+FILLER WORDS TO CUT: basically, actually, really, quite, very, just, simply.
 
-OVERLY ACADEMIC PHRASES:
-It is evident that, It can be seen that, It is apparent that, It is obvious that, There is no doubt that, The fact that, It is well known that, As is well known, It is widely accepted that.
+PARAGRAPH STRUCTURE: Paragraphs 4-7 sentences. Vary length. No one-sentence paragraphs.
 
-FILLER WORDS TO CUT:
-basically, actually, really, quite, very, just, simply.
+FORMATTING: No markdown dividers. Plain text. Blank lines between paragraphs.
 
-PARAGRAPH STRUCTURE:
-- Paragraphs: 4-7 sentences. Vary length. No one-sentence paragraphs.
+PATTERNS TO BREAK: No triads. Break parallel structure. No "not only X but also Y." No em dashes. No nominalizations.
 
-FORMATTING:
-- No markdown dividers. Plain text. Blank lines between paragraphs.
-
-PATTERNS TO BREAK:
-- No triads (three adjectives/examples/clauses in a row).
-- Break parallel structure. Break symmetry.
-- Never use "not only X but also Y."
-- "While X, Y" max once per paragraph.
-- No em dashes. No "By [verb]ing..." starts.
-- No nominalizations. No "the [noun] of [noun]."
-
-TONE:
-Knowledgeable but approachable researcher. Direct. Clear. Not textbook. Not blogger. Not robot.
+TONE: Knowledgeable but approachable researcher. Direct. Clear. Not textbook. Not blogger. Not robot.
 
 Now rewrite the text I send. Output only the rewritten text."""
 
 
-def find_violations(text: str):
+def find_violations(text):
     found = []
     lower = text.lower()
     for word in BANNED_WORDS:
@@ -134,14 +102,13 @@ def find_violations(text: str):
     return found
 
 
-async def call_gemini(prompt: str) -> str:
+async def call_gemini(prompt):
     last_error = None
     for model_name in MODELS_TO_TRY:
         try:
             response = await asyncio.to_thread(
                 client.models.generate_content,
-                model=model_name,
-                contents=prompt,
+                model=model_name, contents=prompt,
             )
             return response.text.strip()
         except Exception as e:
@@ -150,7 +117,7 @@ async def call_gemini(prompt: str) -> str:
     raise last_error
 
 
-async def humanize_paragraph(text: str) -> str:
+async def humanize_paragraph(text):
     prompt = f"{HUMANIZER_PROMPT}\n\n---\n\nTEXT TO REWRITE:\n\n{text}"
     try:
         return await call_gemini(prompt)
@@ -158,7 +125,7 @@ async def humanize_paragraph(text: str) -> str:
         return text
 
 
-async def humanize_all(paragraphs: list, progress_cb=None) -> list:
+async def humanize_all(paragraphs, progress_cb=None):
     results = [None] * len(paragraphs)
     done_count = 0
     for i in range(0, len(paragraphs), PARALLEL_BATCH):
@@ -168,10 +135,7 @@ async def humanize_all(paragraphs: list, progress_cb=None) -> list:
             return_exceptions=True,
         )
         for j, r in enumerate(batch_results):
-            if isinstance(r, Exception):
-                results[i + j] = paragraphs[i + j]
-            else:
-                results[i + j] = r
+            results[i + j] = paragraphs[i + j] if isinstance(r, Exception) else r
             done_count += 1
             if progress_cb:
                 progress_cb(done_count, len(paragraphs))
@@ -191,8 +155,7 @@ with col1:
     input_text = st.text_area("Input", height=400, label_visibility="collapsed",
                               key="input_area", placeholder="Paste AI text here...")
     wc = len(input_text.split())
-    color = "red" if wc > MAX_WORDS else "gray"
-    st.markdown(f":{color}[{wc} / {MAX_WORDS} words]")
+    st.markdown(f":{'red' if wc > MAX_WORDS else 'gray'}[{wc} / {MAX_WORDS} words]")
 
 with col2:
     st.subheader("Output (Humanized)")
@@ -217,15 +180,12 @@ if st.button("Humanize", type="primary", use_container_width=True):
         else:
             progress_bar = st.progress(0)
             status = st.empty()
-
             def update_progress(done, total):
                 progress_bar.progress(done / total)
                 status.text(f"Processed {done}/{total} paragraphs...")
-
             status.text(f"Starting: {len(paragraphs)} paragraphs...")
             results = asyncio.run(humanize_all(paragraphs, update_progress))
             final = "\n\n".join(results)
-
             st.session_state.output_text = final
             progress_bar.empty()
             status.empty()
