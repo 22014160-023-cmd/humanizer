@@ -4,7 +4,8 @@ import asyncio
 import streamlit as st
 from google import genai
 
-# --- Config ---
+st.set_page_config(page_title="Humanizer", page_icon="\u270d\ufe0f", layout="wide")
+
 GEMINI_KEY = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 if not GEMINI_KEY:
     st.error("GEMINI_API_KEY not set. Add it in Streamlit Secrets.")
@@ -12,9 +13,9 @@ if not GEMINI_KEY:
 
 client = genai.Client(api_key=GEMINI_KEY)
 
-MODELS_TO_TRY = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.7-flash", "gemini-3.6-flash"]
+MODELS_TO_TRY = ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]
 MAX_WORDS = 3000
-PARALLEL_BATCH = 4
+PARALLEL_BATCH = 6
 
 BANNED_WORDS = [
     "essential","crucial","beneficial","impactful","furthermore","moreover",
@@ -149,24 +150,17 @@ async def call_gemini(prompt: str) -> str:
     raise last_error
 
 
-async def humanize_paragraph(text: str, max_retries: int = 2) -> str:
+async def humanize_paragraph(text: str) -> str:
     prompt = f"{HUMANIZER_PROMPT}\n\n---\n\nTEXT TO REWRITE:\n\n{text}"
-    output = await call_gemini(prompt)
-    for _ in range(max_retries):
-        violations = find_violations(output)
-        if not violations:
-            return output
-        fix_prompt = (
-            f"Previous output used banned words: {', '.join(violations)}. "
-            f"Rewrite below. Replace every banned word with a plain alternative. "
-            f"Keep all facts, numbers, citations. Output only the text.\n\n{output}"
-        )
-        output = await call_gemini(fix_prompt)
-    return output
+    try:
+        return await call_gemini(prompt)
+    except Exception:
+        return text
 
 
-async def humanize_all(paragraphs: list) -> list:
+async def humanize_all(paragraphs: list, progress_cb=None) -> list:
     results = [None] * len(paragraphs)
+    done_count = 0
     for i in range(0, len(paragraphs), PARALLEL_BATCH):
         batch = paragraphs[i:i + PARALLEL_BATCH]
         batch_results = await asyncio.gather(
@@ -178,48 +172,61 @@ async def humanize_all(paragraphs: list) -> list:
                 results[i + j] = paragraphs[i + j]
             else:
                 results[i + j] = r
-        await asyncio.sleep(2)
+            done_count += 1
+            if progress_cb:
+                progress_cb(done_count, len(paragraphs))
     return results
 
 
-# --- Streamlit UI ---
-st.set_page_config(page_title="Humanizer", page_icon="\u270d\ufe0f", layout="wide")
 st.title("Humanizer")
 st.caption("Academic paper rewriter - 3000 word limit")
+
+if "output_text" not in st.session_state:
+    st.session_state.output_text = ""
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Input (AI text)")
-    input_text = st.text_area("Paste text here", height=400, label_visibility="collapsed")
-    word_count = len(input_text.split())
-    st.caption(f"{word_count} / {MAX_WORDS} words")
+    input_text = st.text_area("Input", height=400, label_visibility="collapsed",
+                              key="input_area", placeholder="Paste AI text here...")
+    wc = len(input_text.split())
+    color = "red" if wc > MAX_WORDS else "gray"
+    st.markdown(f":{color}[{wc} / {MAX_WORDS} words]")
 
 with col2:
     st.subheader("Output (Humanized)")
-    output_placeholder = st.empty()
+    if st.session_state.output_text:
+        st.text_area("Output", value=st.session_state.output_text,
+                     height=400, label_visibility="collapsed", key="output_area")
+        st.download_button("Download .txt", data=st.session_state.output_text,
+                          file_name="humanized.txt", mime="text/plain")
+    else:
+        st.info("Humanized output will appear here.")
 
-run_btn = st.button("Humanize", type="primary", use_container_width=True)
-
-if run_btn:
+if st.button("Humanize", type="primary", use_container_width=True):
     if not input_text.strip():
         st.warning("Please paste some text.")
-    elif word_count > MAX_WORDS:
-        st.error(f"Text exceeds {MAX_WORDS} word limit ({word_count} words).")
+    elif wc > MAX_WORDS:
+        st.error(f"Text exceeds {MAX_WORDS} word limit.")
     else:
-        with st.spinner(f"Humanizing {word_count} words... this takes 30-60s"):
-            raw_paras = input_text.split("\n\n")
-            paragraphs = [p.strip().replace("\n", " ") for p in raw_paras if len(p.strip()) > 50]
-            if not paragraphs:
-                st.error("No valid paragraphs found.")
-            else:
-                results = asyncio.run(humanize_all(paragraphs))
-                final = "\n\n".join(results)
-                output_placeholder.text_area("Output", value=final, height=400, label_visibility="collapsed")
-                st.caption(f"{len(final.split())} words out - {len(paragraphs)} paragraphs")
-                st.download_button(
-                    label="Download .txt",
-                    data=final,
-                    file_name="humanized.txt",
-                    mime="text/plain",
-                )
+        raw_paras = input_text.split("\n\n")
+        paragraphs = [p.strip().replace("\n", " ") for p in raw_paras if len(p.strip()) > 50]
+        if not paragraphs:
+            st.error("No valid paragraphs found.")
+        else:
+            progress_bar = st.progress(0)
+            status = st.empty()
+
+            def update_progress(done, total):
+                progress_bar.progress(done / total)
+                status.text(f"Processed {done}/{total} paragraphs...")
+
+            status.text(f"Starting: {len(paragraphs)} paragraphs...")
+            results = asyncio.run(humanize_all(paragraphs, update_progress))
+            final = "\n\n".join(results)
+
+            st.session_state.output_text = final
+            progress_bar.empty()
+            status.empty()
+            st.rerun()
